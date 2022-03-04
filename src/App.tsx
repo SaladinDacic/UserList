@@ -1,12 +1,11 @@
 import "./App.scss";
 import { Routes, Route } from "react-router-dom";
 import { AddEditUser, Landing } from "./Pages";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { v4 as uuid } from "uuid";
 import { ListUsers } from "./Components";
 
 export interface UserInterface {
-  id: string;
   UserName: string;
   Email: string;
   PhoneNumber: string;
@@ -15,55 +14,49 @@ export interface UserInterface {
 }
 function App() {
   const initialUser = {
-    id: uuid(),
     UserName: "Blablo",
     Email: "blablabla@gmail.com",
     PhoneNumber: "065468869",
     Gender: "male",
-    DateOfBirth: "15-12-1999",
+    DateOfBirth: "1999-12-12",
   };
-  let savedState = window.localStorage.getItem("userList");
-  const [userList, setUserList] = useState<UserInterface[]>(() => {
-    if (savedState && JSON.parse(savedState).length !== 0) {
-      return JSON.parse(savedState);
-    } else {
-      return [initialUser];
-    }
-  });
 
-  useEffect(() => {
-    window.localStorage.setItem("userList", JSON.stringify(userList));
-  }, [userList]);
+  const [userList, setUserList] = useState<{ [id: string]: UserInterface }>(
+    () => {
+      let id = uuid() as string;
+      let obj = {} as { [id: string]: UserInterface };
+      obj[id] = initialUser;
+      return obj;
+    }
+  );
 
   const addUser = (userObj: UserInterface) => {
-    setUserList((oldState) => {
-      if (oldState) {
-        return [...oldState, userObj];
-      } else return [userObj];
-    });
+    //1. coppy state
+    let oldState = { ...userList };
+    //2. create new state
+    let newId = uuid();
+    let newState = { ...oldState };
+    newState[newId] = userObj;
+    //3. set newState
+    setUserList(newState);
   };
   const editUser = (id: string, userObj: UserInterface) => {
-    setUserList((oldState) => {
-      if (oldState) {
-        let newState = oldState.map((obj: UserInterface) => {
-          if (obj.id === id) return userObj;
-          else return obj;
-        });
-        return [...newState];
-      } else return [...oldState];
-    });
+    //1. coppy state
+    let oldState = { ...userList };
+    //2. create new state
+    oldState[id] = userObj;
+    let newState = { ...oldState };
+    //3. set newState
+    setUserList(newState);
   };
   const deleteUser = (id: string) => {
-    setUserList((oldState) => {
-      if (oldState) {
-        let newState = oldState.filter((obj: UserInterface) => {
-          return obj["id"] !== id;
-        });
-        return [...newState];
-      } else {
-        return [...oldState];
-      }
-    });
+    //1. coppy state
+    let oldState = { ...userList };
+    //2. create new state
+    delete oldState[id];
+    let newState = { ...oldState };
+    //3. set newState
+    setUserList(newState);
   };
 
   return (
@@ -79,8 +72,14 @@ function App() {
             />
           }
         />
-        <Route path="/add" element={<AddEditUser addUser={addUser} />} />
-        <Route path="/edit/:id" element={<AddEditUser editUser={editUser} />} />
+        <Route
+          path="/add"
+          element={<AddEditUser userList={userList} addUser={addUser} />}
+        />
+        <Route
+          path="/edit/:id"
+          element={<AddEditUser userList={userList} editUser={editUser} />}
+        />
       </Routes>
     </div>
   );

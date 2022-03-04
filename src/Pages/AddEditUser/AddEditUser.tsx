@@ -1,28 +1,26 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { v4 as uuid } from "uuid";
 import { UserInterface } from "../../App";
 import "./AddEditUser.scss";
 
 interface AddEditUserProps {
   addUser?: (userObj: UserInterface) => void;
   editUser?: (id: string, userObj: UserInterface) => void;
+  userList: { [id: string]: UserInterface };
 }
 
-export const AddEditUser = ({ addUser, editUser }: AddEditUserProps) => {
+export const AddEditUser = ({
+  addUser,
+  editUser,
+  userList,
+}: AddEditUserProps) => {
   const { id } = useParams();
   let redirect = useNavigate();
-  const [userData, setUserData] = useState<UserInterface | null>();
-
-  useEffect(() => {
-    let savedDataString = window.localStorage.getItem("userList");
-    if (savedDataString) {
-      let foundUser = JSON.parse(savedDataString).find((obj: UserInterface) => {
-        return obj["id"] === id;
-      });
-      setUserData(foundUser);
-    }
-  }, [id]);
+  const [userData] = useState<UserInterface | undefined>(() => {
+    if (userList && id) {
+      return userList[id];
+    } else return;
+  });
 
   const handleAddUser = (
     evt: React.FormEvent<HTMLFormElement> & {
@@ -30,9 +28,7 @@ export const AddEditUser = ({ addUser, editUser }: AddEditUserProps) => {
     }
   ) => {
     evt.preventDefault();
-    let newId = uuid();
     let newUserObj: UserInterface = {
-      id: newId,
       UserName: evt.target.elements.UserName.value,
       Email: evt.target.elements.Email.value,
       PhoneNumber: evt.target.elements.PhoneNumber.value,
@@ -50,9 +46,7 @@ export const AddEditUser = ({ addUser, editUser }: AddEditUserProps) => {
     }
   ) => {
     evt.preventDefault();
-    let newId = uuid();
     let newUserObj: UserInterface = {
-      id: newId,
       UserName: evt.target.elements.UserName.value,
       Email: evt.target.elements.Email.value,
       PhoneNumber: evt.target.elements.PhoneNumber.value,
